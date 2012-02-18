@@ -1,0 +1,37 @@
+#!/home/spartan/.rvm/rubies/ruby-1.9.2-p290/bin/ruby
+
+require 'rubygems'
+require 'json'
+require 'net/http'
+require 'colorize'
+
+def retrieve(movie)
+  base_url = "http://api.rottentomatoes.com/api/public/v1.0/movies.json?apikey=9tr6ddgz6nz9gvaut8r4w47y"
+  url = "#{base_url}&q=#{URI.encode(movie)}&page_limit=5"
+  resp = Net::HTTP.get_response(URI.parse(url))
+  data = resp.body
+end
+
+def color(rating)
+  rating >= 50 ? rating.to_s.green : rating.to_s.red
+end
+
+###### START ######
+movie = ARGV.join(" ")
+puts "Give me a movie title to check" if movie.nil?
+result = JSON.parse(retrieve(movie))
+
+#Error Checking
+puts "Rotten Tomatoes Error" if result.has_key? 'Error'
+puts "Movie not Found!"      if result["total"] == 0
+
+
+#puts JSON.pretty_generate(result)
+#puts result["total"]
+result["movies"].each_with_index do |movie, index|
+  puts
+  puts "#{index+1}. #{movie["title"]} (#{movie["year"]})"
+  puts "critics:  #{color(movie["ratings"]["critics_score"])}  |  audience: #{color(movie["ratings"]["audience_score"])}"
+  puts "Synopsis:\n#{movie["synopsis"]}"
+  puts "------------------------------------------------------"
+end
